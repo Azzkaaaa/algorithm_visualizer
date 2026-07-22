@@ -2,9 +2,17 @@ import ArrayVisualizer from "./ArrayVisualizer";
 
 type VariablePanelProps = {
     variables: Record<string, unknown>;
+    previousVariables: Record<string, unknown>;
 };
 
-export default function VariablePanel({ variables }: VariablePanelProps) {
+type ArrayVisualizerProps = {
+    name: string;
+    values: unknown[];
+    previousValues?: unknown[];
+    activeIndex?: number | null;
+};
+
+export default function VariablePanel({ variables, previousVariables }: VariablePanelProps) {
     const entries = Object.entries(variables);
 
     if (entries.length === 0) {
@@ -25,12 +33,21 @@ export default function VariablePanel({ variables }: VariablePanelProps) {
     return (
         <div className="space-y-3">
             {entries.map(([name, value]) => {
+                const previousValue = previousVariables[name];
+                const hasChanged =
+                    JSON.stringify(previousValue) !== JSON.stringify(value);
+
                 if (Array.isArray(value)) {
                 return (
                     <ArrayVisualizer
                         key={name}
                         name={name}
                         values={value}
+                        previousValues={
+                            Array.isArray(previousValue)
+                                ? previousValue
+                                : undefined
+                        }
                         activeIndex={possibleActiveIndex}
                     />
                 );
@@ -41,6 +58,7 @@ export default function VariablePanel({ variables }: VariablePanelProps) {
                         key={name}
                         name={name}
                         value={value}
+                        hasChanged={hasChanged}
                     />
                 );
             })}
@@ -51,14 +69,22 @@ export default function VariablePanel({ variables }: VariablePanelProps) {
 type PrimitiveVariableProps = {
     name: string;
     value: unknown;
+    hasChanged: boolean;
 }
 
 function PrimitiveVariable({
     name,
     value,
+    hasChanged,
 }: PrimitiveVariableProps) {
     return (
-        <div className="rounded-lg bg-zinc-950 p-3">
+        <div
+            className={`rounded-lg border p-3 ${
+                hasChanged
+                ? "border-emerald-500 bg-emerald-500/10"
+                : "border-transparent bg-zinc-950"
+            }`}
+        >
             <span className="font-mono text-blue-300">
                 {name}
             </span>

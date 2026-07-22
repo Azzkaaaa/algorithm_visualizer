@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import ActiveCode from "@/components/ActiveCode";
 import CodeInputPanel from "@/components/CodeInputPanel";
@@ -29,6 +29,8 @@ const DEFAULT_ARGS = `[
   9
 ]`;
 
+
+
 export default function HomePage() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [functionName, setFunctionName] =
@@ -42,6 +44,9 @@ export default function HomePage() {
   const [currentStepIndex, setCurrentStepIndex] =
     useState(0);
 
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [speedMs, setSpeedMs] = useState(1000);
+
   const [isLoading, setIsLoading] =
     useState(false);
 
@@ -50,8 +55,48 @@ export default function HomePage() {
 
   const currentStep: TraceStep | null =
     trace?.steps[currentStepIndex] ?? null;
+  
+  const previousStep: TraceStep | null =
+    trace && currentStepIndex > 0
+      ? trace.steps[currentStepIndex - 1]
+      : null;
+  
+  useEffect(() => {
+    if (
+      !isPlaying ||
+      !trace ||
+      trace.steps.length === 0
+    ) {
+      return;
+    }
+
+    const lastIndex = trace.steps.length - 1;
+
+    const timeoutId = window.setTimeout(() => {
+      const nextIndex = Math.min(
+        currentStepIndex + 1,
+        lastIndex,
+      );
+
+      setCurrentStepIndex(nextIndex);
+
+      if (nextIndex >= lastIndex) {
+        setIsPlaying(false);
+      }
+    }, speedMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    isPlaying,
+    speedMs,
+    trace,
+    currentStepIndex,
+  ]);
 
   async function handleRun(): Promise<void> {
+    setIsPlaying(false);
     setError(null);
     setIsLoading(true);
 
@@ -88,6 +133,8 @@ export default function HomePage() {
   }
 
   function goToPreviousStep(): void {
+    setIsPlaying(false);
+
     setCurrentStepIndex((currentIndex) =>
       Math.max(currentIndex - 1, 0),
     );
@@ -98,12 +145,33 @@ export default function HomePage() {
       return;
     }
 
+    setIsPlaying(false);
+
     setCurrentStepIndex((currentIndex) =>
       Math.min(
         currentIndex + 1,
         trace.steps.length - 1,
       ),
     );
+  }
+
+  function togglePlayPause(): void {
+    if (!trace) {
+      return;
+    }
+
+    if (currentStepIndex >= trace.steps.length - 1) {
+      setCurrentStepIndex(0);
+      setIsPlaying(true);
+      return;
+    }
+
+    setIsPlaying((currentValue) => !currentValue);
+  }
+
+  function resetExecution(): void {
+    setIsPlaying(false);
+    setCurrentStepIndex(0);
   }
 
   return (
@@ -141,10 +209,16 @@ export default function HomePage() {
 
             <ExecutionControls
               currentStep={currentStep}
+              previousStep={previousStep}
               currentStepIndex={currentStepIndex}
               totalSteps={trace?.steps.length ?? 0}
+              isPlaying={isPlaying}
+              speedMs={speedMs}
               onPrevious={goToPreviousStep}
               onNext={goToNextStep}
+              onPlayPause={togglePlayPause}
+              onReset={resetExecution}
+              onSpeedChange={setSpeedMs}
             />
 
             {trace && (

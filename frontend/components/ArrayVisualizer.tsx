@@ -1,12 +1,14 @@
 type ArrayVisualizerProps = {
-  name: string;
-  values: unknown[];
-  activeIndex?: number | null;
+    name: string;
+    values: unknown[];
+    previousValues?: unknown[];
+    activeIndex?: number | null;
 };
 
 export default function ArrayVisualizer({
   name,
   values,
+  previousValues,
   activeIndex = null,
 }: ArrayVisualizerProps) {
   return (
@@ -18,6 +20,10 @@ export default function ArrayVisualizer({
       <div className="flex gap-2 overflow-x-auto pb-2">
         {values.map((value, index) => {
           const isActive = activeIndex === index;
+          const hasChanged =
+            previousValues !== undefined &&
+            JSON.stringify(previousValues[index]) !==
+              JSON.stringify(value);
 
           return (
             <div
@@ -28,7 +34,9 @@ export default function ArrayVisualizer({
                 className={`min-w-12 rounded border px-3 py-2 font-mono ${
                   isActive
                     ? "border-yellow-400 bg-yellow-500/20 text-yellow-200"
-                    : "border-zinc-700"
+                    : hasChanged
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-200"
+                      : "border-zinc-700"
                 }`}
               >
                 {formatValue(value)}
