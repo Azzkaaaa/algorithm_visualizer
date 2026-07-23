@@ -1,3 +1,5 @@
+import CodeEditor from "./CodeEditor";
+
 type CodeInputPanelProps = {
   code: string;
   functionName: string;
@@ -49,14 +51,9 @@ export default function CodeInputPanel({
                     Python code
                 </label>
 
-                <textarea
-                    id="code"
+                <CodeEditor
                     value={code}
-                    onChange={(event) =>
-                        onCodeChange(event.target.value)
-                    }
-                    spellCheck={false}
-                    className="min-h-96 w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 p-3 font-mono text-sm outline-none focus:border-blue-500"
+                    onChange={onCodeChange}
                 />
             </div>
 
