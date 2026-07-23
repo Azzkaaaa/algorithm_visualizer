@@ -1,18 +1,30 @@
-import ArrayVisualizer from "./ArrayVisualizer";
+import ArrayVisualizer, {
+  type ArrayPointer,
+} from "./ArrayVisualizer";
+
+const POINTER_VARIABLE_NAMES = new Set([
+  "i",
+  "j",
+  "index",
+  "left",
+  "right",
+  "middle",
+  "mid",
+  "low",
+  "high",
+  "start",
+  "end",
+]);
 
 type VariablePanelProps = {
-    variables: Record<string, unknown>;
-    previousVariables: Record<string, unknown>;
+  variables: Record<string, unknown>;
+  previousVariables: Record<string, unknown>;
 };
 
-type ArrayVisualizerProps = {
-    name: string;
-    values: unknown[];
-    previousValues?: unknown[];
-    activeIndex?: number | null;
-};
-
-export default function VariablePanel({ variables, previousVariables }: VariablePanelProps) {
+export default function VariablePanel({
+  variables,
+  previousVariables,
+}: VariablePanelProps) {
     const entries = Object.entries(variables);
 
     if (entries.length === 0) {
@@ -23,34 +35,57 @@ export default function VariablePanel({ variables, previousVariables }: Variable
         );
     }
 
-    const possibleActiveIndex =
-        typeof variables.i === "number"
-        ? variables.i
-        : typeof variables.index === "number"
-            ? variables.index
-            : null;
+    const arrayEntries = entries.filter(([, value]) =>
+        Array.isArray(value),
+    );
+
+    const shouldUseAutoPointers =
+        arrayEntries.length === 1;
+
+    const pointerCandidates: ArrayPointer[] = entries
+        .filter(
+        ([name, value]) =>
+            POINTER_VARIABLE_NAMES.has(name) &&
+            typeof value === "number" &&
+            Number.isInteger(value),
+        )
+        .map(([name, value]) => ({
+        name,
+        index: value as number,
+        }));
 
     return (
         <div className="space-y-3">
             {entries.map(([name, value]) => {
                 const previousValue = previousVariables[name];
+
                 const hasChanged =
-                    JSON.stringify(previousValue) !== JSON.stringify(value);
+                JSON.stringify(previousValue) !==
+                JSON.stringify(value);
 
                 if (Array.isArray(value)) {
-                return (
-                    <ArrayVisualizer
-                        key={name}
-                        name={name}
-                        values={value}
-                        previousValues={
-                            Array.isArray(previousValue)
+                    const pointersForCurrentArray =
+                        shouldUseAutoPointers
+                        ? pointerCandidates.filter(
+                            (pointer) =>
+                                pointer.index >= 0 &&
+                                pointer.index < value.length,
+                            )
+                        : [];
+
+                    return (
+                        <ArrayVisualizer
+                            key={name}
+                            name={name}
+                            values={value}
+                            previousValues={
+                                Array.isArray(previousValue)
                                 ? previousValue
                                 : undefined
-                        }
-                        activeIndex={possibleActiveIndex}
-                    />
-                );
+                            }
+                            pointers={pointersForCurrentArray}
+                        />
+                    );
                 }
 
                 return (
@@ -70,7 +105,7 @@ type PrimitiveVariableProps = {
     name: string;
     value: unknown;
     hasChanged: boolean;
-}
+};
 
 function PrimitiveVariable({
     name,
@@ -89,7 +124,9 @@ function PrimitiveVariable({
                 {name}
             </span>
 
-            <span className="mx-2 text-zinc-600">=</span>
+            <span className="mx-2 text-zinc-600">
+                =
+            </span>
 
             <span className="font-mono">
                 {formatValue(value)}
