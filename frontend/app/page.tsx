@@ -10,33 +10,27 @@ import type {
   TraceResponse,
   TraceStep,
 } from "@/types/trace";
+import {
+  ALGORITHM_PRESETS,
+} from "@/data/algorithmPresets";
 
-const DEFAULT_CODE = `def two_sum(nums, target):
-    seen = {}
 
-    for i, num in enumerate(nums):
-        complement = target - num
-
-        if complement in seen:
-            return [seen[complement], i]
-
-        seen[num] = i
-
-    return []`;
-
-const DEFAULT_ARGS = `[
-  [2, 7, 11, 15],
-  9
-]`;
+const DEFAULT_PRESET = ALGORITHM_PRESETS[0];
 
 
 
 export default function HomePage() {
-  const [code, setCode] = useState(DEFAULT_CODE);
+  const [selectedPresetId, setSelectedPresetId] =
+    useState(DEFAULT_PRESET.id);
+
+  const [code, setCode] =
+    useState(DEFAULT_PRESET.code);
+
   const [functionName, setFunctionName] =
-    useState("two_sum");
+    useState(DEFAULT_PRESET.functionName);
+
   const [argsText, setArgsText] =
-    useState(DEFAULT_ARGS);
+    useState(DEFAULT_PRESET.argsText);
 
   const [trace, setTrace] =
     useState<TraceResponse | null>(null);
@@ -174,6 +168,52 @@ export default function HomePage() {
     setCurrentStepIndex(0);
   }
 
+  function handlePresetChange(
+    presetId: string,
+  ): void {
+    setSelectedPresetId(presetId);
+    setIsPlaying(false);
+    setTrace(null);
+    setCurrentStepIndex(0);
+    setError(null);
+
+    if (presetId === "custom") {
+      return;
+    }
+
+    const selectedPreset =
+      ALGORITHM_PRESETS.find(
+        (preset) => preset.id === presetId,
+      );
+
+    if (!selectedPreset) {
+      return;
+    }
+
+    setCode(selectedPreset.code);
+    setFunctionName(selectedPreset.functionName);
+    setArgsText(selectedPreset.argsText);
+  }
+
+  function handleCodeChange(value: string): void {
+    setCode(value);
+    setSelectedPresetId("custom");
+  }
+
+  function handleFunctionNameChange(
+    value: string,
+  ): void {
+    setFunctionName(value);
+    setSelectedPresetId("custom");
+  }
+
+  function handleArgsTextChange(
+    value: string,
+  ): void {
+    setArgsText(value);
+    setSelectedPresetId("custom");
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 p-6 text-zinc-100">
       <div className="mx-auto max-w-7xl">
@@ -182,10 +222,6 @@ export default function HomePage() {
             Algorithm Visualizer
           </h1>
 
-          <p className="mt-2 text-zinc-400">
-            Visualisasi eksekusi algoritma Python
-            langkah demi langkah.
-          </p>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -195,9 +231,14 @@ export default function HomePage() {
             argsText={argsText}
             isLoading={isLoading}
             error={error}
-            onCodeChange={setCode}
-            onFunctionNameChange={setFunctionName}
-            onArgsTextChange={setArgsText}
+            presets={ALGORITHM_PRESETS}
+            selectedPresetId={selectedPresetId}
+            onPresetChange={handlePresetChange}
+            onCodeChange={handleCodeChange}
+            onFunctionNameChange={
+              handleFunctionNameChange
+            }
+            onArgsTextChange={handleArgsTextChange}
             onRun={handleRun}
           />
 
