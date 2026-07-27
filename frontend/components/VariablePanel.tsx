@@ -1,6 +1,8 @@
 import ArrayVisualizer, {
   type ArrayPointer,
 } from "./ArrayVisualizer";
+import DictionaryVisualizer from "./DictionaryVisualizer";
+import StackVisualizer from "./StackVisualizer";
 
 const POINTER_VARIABLE_NAMES = new Set([
   "i",
@@ -64,6 +66,21 @@ export default function VariablePanel({
                 JSON.stringify(value);
 
                 if (Array.isArray(value)) {
+                    if (isStackVariable(name)) {
+                        return (
+                        <StackVisualizer
+                            key={name}
+                            name={name}
+                            values={value}
+                            previousValues={
+                            Array.isArray(previousValue)
+                                ? previousValue
+                                : undefined
+                            }
+                        />
+                        );
+                    }
+
                     const pointersForCurrentArray =
                         shouldUseAutoPointers
                         ? pointerCandidates.filter(
@@ -75,15 +92,30 @@ export default function VariablePanel({
 
                     return (
                         <ArrayVisualizer
-                            key={name}
-                            name={name}
-                            values={value}
-                            previousValues={
-                                Array.isArray(previousValue)
-                                ? previousValue
-                                : undefined
-                            }
-                            pointers={pointersForCurrentArray}
+                        key={name}
+                        name={name}
+                        values={value}
+                        previousValues={
+                            Array.isArray(previousValue)
+                            ? previousValue
+                            : undefined
+                        }
+                        pointers={pointersForCurrentArray}
+                        />
+                    );
+                }
+
+                if (isPlainObject(value)) {
+                    return (
+                        <DictionaryVisualizer
+                        key={name}
+                        name={name}
+                        value={value}
+                        previousValue={
+                            isPlainObject(previousValue)
+                            ? previousValue
+                            : undefined
+                        }
                         />
                     );
                 }
@@ -147,4 +179,24 @@ function formatValue(value: unknown): string {
     const serialized = JSON.stringify(value);
 
     return serialized ?? String(value);
+}
+
+function isStackVariable(name: string): boolean {
+    const normalizedName = name.toLowerCase();
+
+    return (
+        normalizedName === "stack" ||
+        normalizedName.endsWith("_stack")
+    );
+}
+
+function isPlainObject(
+    value: unknown,
+): value is Record<string, unknown> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value) &&
+        !("__type__" in value)
+    );
 }
