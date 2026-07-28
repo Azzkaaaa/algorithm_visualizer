@@ -91,6 +91,8 @@ export default function HomePage() {
 
   async function handleRun(): Promise<void> {
     setIsPlaying(false);
+    setTrace(null);
+    setCurrentStepIndex(0);
     setError(null);
     setIsLoading(true);
 
@@ -198,6 +200,7 @@ export default function HomePage() {
   function handleCodeChange(value: string): void {
     setCode(value);
     setSelectedPresetId("custom");
+    clearExecution();
   }
 
   function handleFunctionNameChange(
@@ -205,6 +208,7 @@ export default function HomePage() {
   ): void {
     setFunctionName(value);
     setSelectedPresetId("custom");
+    clearExecution();
   }
 
   function handleArgsTextChange(
@@ -212,6 +216,14 @@ export default function HomePage() {
   ): void {
     setArgsText(value);
     setSelectedPresetId("custom");
+    clearExecution();
+  }
+
+  function clearExecution(): void {
+    setIsPlaying(false);
+    setTrace(null);
+    setCurrentStepIndex(0);
+    setError(null);
   }
 
   return (
