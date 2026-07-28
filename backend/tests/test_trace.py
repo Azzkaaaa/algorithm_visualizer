@@ -20,6 +20,13 @@ TWO_SUM_CODE = """def two_sum(nums, target):
     return []
 """
 
+FACTORIAL_CODE = """def factorial(n):
+    if n <= 1:
+        return 1
+
+    return n * factorial(n - 1)
+"""
+
 
 def test_health_check() -> None:
     response = client.get("/api/health")
@@ -47,3 +54,26 @@ def test_two_sum_trace() -> None:
     assert body["steps"][0]["event"] == "call"
     assert body["steps"][-1]["event"] == "return"
     assert body["steps"][-1]["return_value"] == [0, 1]
+
+def test_recursive_call_stack() -> None:
+    response = client.post(
+        "/api/trace",
+        json={
+            "code": FACTORIAL_CODE,
+            "function_name": "factorial",
+            "args": [4],
+            "kwargs": {},
+        },
+    )
+
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["result"] == 24
+
+    maximum_depth = max(
+        len(step["call_stack"])
+        for step in body["steps"]
+    )
+
+    assert maximum_depth == 4

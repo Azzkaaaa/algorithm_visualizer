@@ -101,4 +101,19 @@ export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
   "({[]})"
 ]`,
   },
+  {
+    id: "factorial",
+    name: "Factorial Recursive",
+    description:
+      "Menghitung faktorial menggunakan pemanggilan function rekursif.",
+    functionName: "factorial",
+    code: `def factorial(n):
+      if n <= 1:
+          return 1
+
+      return n * factorial(n - 1)`,
+    argsText: `[
+    5
+]`,
+  },
 ];

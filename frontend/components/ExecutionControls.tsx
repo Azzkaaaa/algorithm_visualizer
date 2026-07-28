@@ -1,6 +1,7 @@
 import type { TraceStep } from "@/types/trace";
 
 import VariablePanel from "./VariablePanel";
+import CallStackVisualizer from "./CallStackVisualizer";
 
 type ExecutionControlsProps = {
     currentStep: TraceStep | null;
@@ -135,6 +136,10 @@ export default function ExecutionControls({
                 value={currentStep.function}
                 />
             </div>
+
+            <CallStackVisualizer
+                frames={currentStep.call_stack}
+            />
 
             <h3 className="mb-2 font-semibold">
                 Local variables

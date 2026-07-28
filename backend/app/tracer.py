@@ -4,8 +4,9 @@ import sys
 from types import FrameType
 from typing import Callable, Any
 
-from app.schemas import TraceStep
+from app.schemas import CallStackFrame, TraceStep
 from app.serializer import serialize_value
+
 
 USER_CODE_FILENAME = "<user_code>"
 MAX_TRACE_STEPS = 5_000
@@ -16,6 +17,25 @@ def snapshot_locals(frame: FrameType) -> dict[str, Any]:
         for variable_name, value in frame.f_locals.items()
         if not variable_name.startswith("__")
     }
+
+def snapshot_call_stack(frame: FrameType) -> list[CallStackFrame]:
+    frames: list[CallStackFrame] = []
+    current_frame: FrameType | None = frame
+
+    while current_frame is not None:
+        if (current_frame.f_code.co_filename == USER_CODE_FILENAME):
+            frames.append(
+                CallStackFrame(
+                    function=current_frame.f_code.co_name,
+                    line=current_frame.f_lineno,
+                    locals=snapshot_locals(current_frame)
+                )
+            )
+        current_frame = current_frame.f_back
+
+    frames.reverse()
+
+    return frames
 
 def execute_with_trace(
     code: str,
@@ -68,6 +88,7 @@ def execute_with_trace(
                 function=frame.f_code.co_name,
                 locals=snapshot_locals(frame),
                 return_value=return_value,
+                call_stack=snapshot_call_stack(frame),
             )
         )
 
