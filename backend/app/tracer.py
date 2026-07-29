@@ -10,6 +10,7 @@ from app.serializer import serialize_value
 
 USER_CODE_FILENAME = "<user_code>"
 MAX_TRACE_STEPS = 5_000
+MAX_CALL_DEPTH = 100
 
 def snapshot_locals(frame: FrameType) -> dict[str, Any]:
     return {
@@ -80,6 +81,14 @@ def execute_with_trace(
         if event == "return":
             return_value = serialize_value(arg)
 
+        if (
+            event == "call"
+            and get_user_call_depth(frame) > MAX_CALL_DEPTH
+        ):
+            raise RuntimeError(
+                "Kedalaman rekursi melewati batas maksimum."
+            )
+
         steps.append(
             TraceStep(
                 step=len(steps),
@@ -105,3 +114,18 @@ def execute_with_trace(
         sys.settrace(None)
 
     return serialize_value(result), steps
+
+def get_user_call_depth(frame: FrameType) -> int:
+    depth = 0
+    current_frame: FrameType | None = frame
+
+    while current_frame is not None:
+        if (
+            current_frame.f_code.co_filename
+            == USER_CODE_FILENAME
+        ):
+            depth += 1
+
+        current_frame = current_frame.f_back
+
+    return depth
